@@ -1,0 +1,70 @@
+﻿@page "/"
+
+<h1 class="mb-4">Archivio Panificio</h1>
+<button type="button" class="btn btn-primary" @onclick="CaricaDatiArchivio_Click">Carica dati</button>
+
+@if (showTable)
+{
+    <table class="table table-hover table-sm mt-4">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Nome</th>
+                <th scope="col">Cognome</th>
+                <th scope="col">Quantità di pane giornaliera</th>
+                <th scope="col">Paese</th>
+                <th scope="col">Telefono</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in listaClienti)
+            {
+                <tr>
+                    <th scope="row">@item.idCliente</th>
+                    <td>@item.nome</td>
+                    <td>@item.cognome</td>
+                    <td>@item.quantitaPaneGiornaliero</td>
+                    <td>@item.paese</td>
+                    <td>@item.telefono</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code{
+    List<Cliente> listaClienti = new List<Cliente>();
+    bool showTable = false;
+
+    private void CaricaDatiArchivio_Click()
+    {
+        listaClienti.Clear(); // pulisce la lista
+        // CONNESSIONE CON L'ARCHIVIO
+        string connString = "Data Source=Data/panificio.db;"; // stringa di connessione: dice il percorso in cui si trova il file dell'archivio
+        SqliteConnection myConn = new SqliteConnection(connString); // crea la connessione con l'archivio per manipolarlo
+        SqliteCommand myCommand = new SqliteCommand("SELECT * FROM tblClienti;"); // crea un comando con una query SQL per estrarre tutti i campi dall'archivio
+        SqliteDataReader myDr; // oggetto che legge la tabella
+        myCommand.Connection = myConn; // il comando viene eseguito dentro l'archivio panificio
+
+        myConn.Open(); // apre la risorsa per eseguire operazioni sull'archivio
+
+        myDr = myCommand.ExecuteReader(); // esegue la query creata in precedenza (SELECT * FROM tblClienti;)
+
+        while (myDr.Read()) // myDr.Read() restituisce un bool se esiste un record da leggere (true: si / false: no)
+        {
+            Cliente nuovoCliente = new Cliente
+                {
+                    idCliente = Convert.ToInt32(myDr["idCliente"]),
+                    nome = Convert.ToString(myDr["nome"]),
+                    cognome = Convert.ToString(myDr["cognome"]),
+                    quantitaPaneGiornaliero = Convert.ToDouble(myDr["quantitaPaneGiornaliero"]),
+                    paese = Convert.ToString(myDr["paese"]),
+                    telefono = Convert.ToString(myDr["telefono"])
+                };
+            listaClienti.Add(nuovoCliente);
+        }
+        showTable = true;
+
+        myConn.Close(); // chiude la risorsa per liberare spazio
+    }
+}
